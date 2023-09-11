@@ -1,0 +1,60 @@
+version: "3"
+
+services:
+  grafana:
+    image: grafana/grafana
+    restart: unless-stopped
+    environment:
+      # - GF_SECURITY_ADMIN_USER=
+      # - GF_SECURITY_ADMIN_EMAIL=
+      # - GF_SECURITY_ADMIN_PASSWORD=
+
+      - GF_ANALYTICS_REPORTING_ENABLED = false
+      - GF_ANALYTICS_CHECK_FOR_UPDATES = true
+      - GF_ANALYTICS_CHECK_FOR_PLUGIN_UPDATES = true
+      - GF_SMTP_ENABLED = true
+
+      # - GF_SMTP_HOST = 
+      # - GF_SMTP_USER = 
+      # - GF_SMTP_PASSWORD = 
+    ports:
+      - '3000:3000'
+
+    volumes:
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
+      - ./grafana/provisioning:/etc/grafana/provisioning
+      - grafana_storage:/var/lib/grafana
+
+  loki:
+    image: grafana/loki
+    command:
+      - --config.file=/etc/loki/loki.yaml
+      - --log.level=debug
+    ports:
+      - 3100:3100
+      - 9096:9096
+    volumes:
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
+      - ./loki/loki.yaml:/etc/loki/loki.yaml:ro
+      - loki_data:/data/loki
+    restart: unless-stopped
+
+  prometheus:
+    image: prom/prometheus
+    restart: unless-stopped
+    volumes:
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+    ports:
+      - '9090:9090'
+
+volumes:
+  grafana_storage: {}
+  prometheus_data: {}
+  loki_data: {}

@@ -1,0 +1,21 @@
+version: "3"
+
+services:
+  agent:
+    image: grafana/agent:latest
+    volumes:
+      - ./agent/config:/etc/agent-config
+    entrypoint:
+      - /bin/grafana-agent
+      - -config.file=/etc/agent-config/agent.yaml
+      - -metrics.wal-directory=/tmp/agent/wal
+      - -enable-features=integrations-next
+      - -config.expand-env
+      - -config.enable-read-api
+      # - -server.http.address=0.0.0.0:12345
+    environment:
+      # HOSTNAME: agent
+      REMOTE_WRITE_HOST: nas.lan:9009
+      LOKI_HOST: nas.lan:3100
+    ports:
+      - "12345:12345"
