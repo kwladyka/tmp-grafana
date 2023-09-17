@@ -1,5 +1,11 @@
+---
+auth_enabled: false # this will disable multi-tenancy
+
 analytics:
  reporting_enabled: false
+
+server:
+  http_listen_port: 3100
 
 schema_config:
   configs:
