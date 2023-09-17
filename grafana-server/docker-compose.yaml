@@ -1,9 +1,36 @@
-version: "3"
+version: "3.8"
+
+networks:
+  logging:
+
+volumes:
+  grafana_storage: {}
+  prometheus_data: {}
+  loki_data: {}
 
 services:
+  # Since the Loki containers are running as user 10001 and the mounted data volume is owned by root,
+  # Loki would not have permissions to create the directories.
+  # Therefore the init container changes permissions of the mounted directory.
+  init:
+    container_name: init-loki
+    image: &lokiImage grafana/loki:2.9.0
+    user: root
+    entrypoint:
+      - "chown"
+      - "10001:10001"
+      - "/loki"
+    volumes:
+      - ./loki:/loki
+    networks:
+      - logging
+
   grafana:
-    image: grafana/grafana
+    container_name: grafana
+    image: grafana/grafana:9.1.6
     restart: unless-stopped
+    ports:
+      - "3000:3000"
     environment:
       # - GF_SECURITY_ADMIN_USER=
       # - GF_SECURITY_ADMIN_EMAIL=
@@ -17,29 +44,32 @@ services:
       # - GF_SMTP_HOST = 
       # - GF_SMTP_USER = 
       # - GF_SMTP_PASSWORD = 
-    ports:
-      - '3000:3000'
-
     volumes:
       - /etc/timezone:/etc/timezone:ro
       - /etc/localtime:/etc/localtime:ro
       - ./grafana/provisioning:/etc/grafana/provisioning
       - grafana_storage:/var/lib/grafana
+    networks:
+      - logging
 
   loki:
-    image: grafana/loki
+    container_name: loki
+    image: *lokiImage
+    restart: unless-stopped
+    ports:
+      - "3100:3100"
+      - "9096:9096"
+      - "7946:7946"
     command:
       - --config.file=/etc/loki/loki.yaml
       - --log.level=debug
-    ports:
-      - 3100:3100
-      - 9096:9096
     volumes:
       - /etc/timezone:/etc/timezone:ro
       - /etc/localtime:/etc/localtime:ro
       - ./loki/loki.yaml:/etc/loki/loki.yaml:ro
       - loki_data:/data/loki
-    restart: unless-stopped
+    networks:
+      - logging
 
   prometheus:
     image: prom/prometheus
@@ -53,8 +83,3 @@ services:
       - '--storage.tsdb.path=/prometheus'
     ports:
       - '9090:9090'
-
-volumes:
-  grafana_storage: {}
-  prometheus_data: {}
-  loki_data: {}
