@@ -1,42 +1,38 @@
 integrations:
+  # metrics:
+  #   autoscrape:
+  #     enable: true
   agent:
-    enabled: true
+    instance: foo-agent
+  node_exporter:
+    instance: foo-node_exporter
+    rootfs_path: /host/root
+    sysfs_path: /host/sys
+    procfs_path: /host/proc
+    udev_data_path: /host/root/run/udev/data
+    # set_collectors:
+    #   - cpu
+    #   - diskstats
 
-# metrics:
-#   global:
-#     scrape_interval: 60s
-#     remote_write:
-#     - url: http://${REMOTE_WRITE_HOST:-localhost:9009}/api/v1/push
-#   configs:
-#   - name: default
-#     scrape_configs:
-#     - job_name: avalanche
-#       static_configs:
-#       - targets: ['${AVALANCHE_HOST:-localhost:9001}']
+server:
+  log_level: debug
 
-# logs:
-#   configs:
-#   - name: default
-#     clients:
-#       - url: http://${LOKI_HOST:-localhost:3100}/loki/api/v1/push
-#     positions:
-#       filename: /tmp/positions.yaml
-#     scrape_configs:
-#     ## Uncomment to read logs from /var/log
-#     - job_name: system
-#       static_configs:
-#       - targets: [localhost]
-#         labels:
-#           job: varlogs
-#           __path__: /var/log/*log
+metrics:
+  wal_directory: /tmp/agent
+  global:
+    scrape_interval: 60s
+    scrape_timeout: 5s
+    remote_write:
+      - url: http://dockers.lan:9090/api/v1/push
+      # - url: http://nas.lan:9090/api/v1/push
+#      - url: http://host.docker.internal:9090/api/v1/push
+  configs:
+  - name: default
+    scrape_configs:
+      - job_name: agent-localhost-node-exporter
+        static_configs:
+          - targets: ['dockers.lan:9100']
 
-# traces:
-#   configs:
-#   - name: default
-#     remote_write:
-#       - endpoint: ${TEMPO_HOST:-localhost:4317}
-#         insecure: true
-#     receivers:
-#       jaeger:
-#         protocols:
-#           thrift_http:
+# instance: foo
+# extra_labels:
+#   [ foo: bar]

@@ -4,18 +4,24 @@ services:
   agent:
     image: grafana/agent:latest
     volumes:
+      # - /etc/timezone:/etc/timezone:ro
+      # - /etc/localtime:/etc/localtime:ro
       - ./agent/config:/etc/agent-config
+      - /var/run/docker.sock:/var/run/docker.sock
+      # node_exporter
+      - /:/host/root:ro,rslave
+      - /sys:/host/sys:ro,rslave
+      - /proc:/host/proc:ro,rslave
     entrypoint:
       - /bin/grafana-agent
+      - -server.http.address=0.0.0.0:12345
       - -config.file=/etc/agent-config/agent.yaml
       - -metrics.wal-directory=/tmp/agent/wal
-      - -enable-features=integrations-next
+      # - -enable-features=integrations-next
       - -config.expand-env
       - -config.enable-read-api
-      # - -server.http.address=0.0.0.0:12345
-    environment:
-      # HOSTNAME: agent
-      REMOTE_WRITE_HOST: nas.lan:9009
-      LOKI_HOST: nas.lan:3100
+    # environment:
+    #   REMOTE_WRITE_HOST: nas.lan:9009
+    #   LOKI_HOST: nas.lan:3100
     ports:
-      - "12345:12345"
+      - 12345:12345
